@@ -1,7 +1,7 @@
 // Importing React
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 // Importing Reactflow elements
-import ReactFlow, { addEdge, applyEdgeChanges, applyNodeChanges, Background, Handle, ReactFlowProvider, useReactFlow, useCon } from "reactflow";
+import ReactFlow, { addEdge, applyEdgeChanges, applyNodeChanges, Background, Handle, ReactFlowProvider, useReactFlow } from "reactflow";
 // Importing Reactflow CSS
 import 'reactflow/dist/style.css';
 
@@ -15,42 +15,33 @@ const initialNodes = [ //Basic initial node declaration
     { id: '2', type: 'editable', position: { x: 400, y: 50 }, data: { label: "Node 2" } },
 ];
 
-function EditableNode({ data, isConnectable }) {
+function EditableNode({ id, data }) {
+    const { setNodes } = useReactFlow();
+    const inputRef = useRef(null);
+
+    const onLabelChange = useCallback((evt) => {
+        const newLabel = evt.target.value;
+
+        setNodes((nds) => {
+            nds.map((node) => {
+                if (node.id === id) {
+                    node.data = { ...node.data, label: newLabel };
+                }
+                return node;
+            })
+        });
+
+
+    }, [id, setNodes]);
+
     
-const connection = useConnection();
- 
-  const isTarget = connection.inProgress && connection.fromNode.id !== id;
- 
-  const label = isTarget ? 'Drop here' : 'Drag to connect';
- 
-  return (
-    <div className="customNode">
-      <div
-        className="customNodeBody"
-      >
-        {/* If handles are conditionally rendered and not present initially, you need to update the node internals https://reactflow.dev/docs/api/hooks/use-update-node-internals/ */}
-        {/* In this case we don't need to use useUpdateNodeInternals, since !isConnecting is true at the beginning and all handles are rendered initially. */}
-        {!connection.inProgress && (
-          <Handle
-            className="customHandle"
-            position={Position.Right}
-            type="source"
-          />
-        )}
-        {/* We want to disable the target handle, if the connection was started from this node */}
-        {(!connection.inProgress || isTarget) && (
-          <Handle className="customHandle" position={Position.Left} type="target" isConnectableStart={false} />
-        )}
-        {label}
-      </div>
-    </div>
-  );
+
     return (
         <>
             
-            <Handle type="source" position="top" id="top-source" isConnectable={isConnectable} />
+            <Handle type="source" position="top" id="top-source" />
                 {data.isEditing ? <input type="text" value={data.label}/> : data.label}
-            <Handle type="target" position="bottom"id="bottom-target" isConnectable={isConnectable} />
+            <Handle type="target" position="bottom"id="bottom-target" />
     </>
     );
 }
@@ -133,7 +124,7 @@ function Flow() {
                 nodeTypes={nodeTypes}
                 isValidConnection={() => true}
             >
-                <Background />
+                <Background/>
             </ReactFlow>
         </div>
     );
