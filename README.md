@@ -6,6 +6,17 @@ A simple, fast, and beautiful mind mapping tool built for developers during the 
 *   **Live Demo:** [stacksense-black.vercel.app](https://stacksense-black.vercel.app/)
 *   **Project Devlogs:** [See my progress on Hack Club](https://summer.hackclub.com/projects/7327)
 
+## Instructions
+
+* Double-Click in empty space to create new node
+* After selecting a node or edge, click "Backspace" to delete it.
+* Double Clicking the node let's you edit the label of node
+
+# What Next?
+-[ ] Change color of nodes
+-[ ] Link with Kanban Boards
+... and much more
+
 ## ✨ Features
 *   **Dynamic Node Creation:** Double-click anywhere on the canvas to create a new idea.
 *   **Inline Editing:** Double-click any node to instantly edit its text.
