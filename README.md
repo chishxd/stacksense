@@ -3,7 +3,7 @@
 A simple, fast, and beautiful mind mapping tool built for developers during the Hack Club Summer of Making.
 
 ## 🚀 Try It Out!
-*   **Live Demo:** [your-project-name.vercel.app](https://stacksense-black.vercel.app/)
+*   **Live Demo:** [stacksense-black.vercel.app](https://stacksense-black.vercel.app/)
 *   **Project Devlogs:** [See my progress on Hack Club](https://summer.hackclub.com/projects/7327)
 
 ## ✨ Features
