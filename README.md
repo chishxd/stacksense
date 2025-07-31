@@ -1,48 +1,39 @@
-# StackSense
+# StackSense Mind Mapper
 
-StackSense is a simple, interactive node-based mind-mapper made for developers built with React and the React Flow library. It allows users to create, connect, and manipulate nodes on a canvas. More featrues coming soon!
+A simple, fast, and beautiful mind mapping tool built for developers during the Hack Club Summer of Making.
 
-![JavaScript Badge](https://img.shields.io/badge/JavaScript-F7DF1E?logo=javascript&logoColor=000&style=for-the-badge)![React Badge](https://img.shields.io/badge/React-61DAFB?logo=react&logoColor=000&style=for-the-badge)
+## 🚀 Try It Out!
+*   **Live Demo:** [your-project-name.vercel.app](https://stacksense-black.vercel.app/)
+*   **Project Devlogs:** [See my progress on Hack Club](https://summer.hackclub.com/projects/7327)
 
-## Features
+## ✨ Features
+*   **Dynamic Node Creation:** Double-click anywhere on the canvas to create a new idea.
+*   **Inline Editing:** Double-click any node to instantly edit its text.
+*   **Flexible Connections:** Connect any side of a node to any other.
+*   **Sleek Dark Mode:** A developer-friendly theme that's easy on the eyes.
 
-*   **Add Nodes:** Double-click anywhere on the canvas to add a new node.
-*   **Move Nodes:** Click and drag nodes to position them anywhere you like.
-*   **Connect Nodes:** Drag from one node's handle to another to create a connection (an edge).
-*   **Delete Edges:** Select an edge and press the backspace key to delete it.
+## 🛠️ Tech Stack
+*   **React**
+*   **React Flow**
+*   **Vercel** for deployment
 
-## Getting Started
+## 💻 Running Locally
 
-### Prerequisites
-
-*   Node.js (v14 or later)
-*   npm or yarn
-
-### Installation
-
-1.  Clone the repository:
-    ```sh
-    git clone <your-repository-url>
+1.  **Clone the repository:**
+    ```bash
+    git clone https://github.com/chishxd/stacksense
     ```
-2.  Navigate to the project directory:
-    ```sh
+2.  **Navigate to the project directory:**
+    ```bash
     cd stacksense
     ```
-3.  Install the dependencies:
-    ```sh
+3.  **Install dependencies:**
+    ```bash
     npm install
     ```
-
-### Running the Application
-
-To start the development server, run:
-```sh
-npm start
-```
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
-
-## Usage
-
-*   **To add a node:** Double-click on an empty area of the canvas.
-*   **To move a node:** Click and drag a node.
-*   **To create a connection:** Click and drag from the handle of one node to the handle of another.
+4.  **Start the development server:**
+    ```bash
+    npm start
+    ```
+---
+Built with ❤️ for the [Hack Club Summer of Making](https://summer.hackclub.com/).
