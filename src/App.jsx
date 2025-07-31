@@ -1,139 +1,180 @@
-// Importing React
-import { useState, useCallback, useRef } from "react";
-// Importing Reactflow elements
-import ReactFlow, { addEdge, applyEdgeChanges, applyNodeChanges, Background, Handle, ReactFlowProvider, useReactFlow } from "reactflow";
-// Importing Reactflow CSS
+import { useState, useCallback } from "react";
+import ReactFlow, {
+    addEdge,
+    applyEdgeChanges,
+    applyNodeChanges,
+    Background,
+    Handle,
+    ReactFlowProvider,
+    useReactFlow
+} from "reactflow";
 import 'reactflow/dist/style.css';
 
+// =========================================================================================
+// STEP 1: Define the custom node. It will receive its id and data props from React Flow.
+// The `data` prop will contain the functions we pass to it later.
+// =========================================================================================
+function EditableNode({ id, data }) {
+    // This function is called when the input value changes.
+    const handleInputChange = (e) => {
+        // It calls the `onLabelChange` function that was passed in `data`.
+        data.onLabelChange(id, e.target.value);
+    };
+
+    // This function is called when a key is pressed in the input.
+    const handleKeyDown = (e) => {
+        if (e.key === 'Enter') {
+            // When the Enter key is pressed, we call `setEditing` to false.
+            data.setEditing(false);
+        }
+    };
+
+    return (
+        <div style={{ padding: 10, borderRadius: 5, background: '#A5D6A7' }}>
+            <Handle type="source" position="top" id="a" />
+            {data.isEditing ? (
+                <input
+                    type="text"
+                    value={data.label}
+                    onChange={handleInputChange}
+                    onKeyDown={handleKeyDown}
+                    // When the input loses focus (the user clicks away), we stop editing.
+                    onBlur={() => data.setEditing(false)}
+                    autoFocus // Automatically focus the input when it appears.
+                />
+            ) : (
+                // When not editing, just display the label.
+                <span>{data.label}</span>
+            )}
+            <Handle type="target" position="bottom" id="b" />
+        </div>
+    );
+}
+
+// =========================================================================================
+// STEP 2: Register our custom node type.
+// =========================================================================================
 const nodeTypes = {
-        "editable": EditableNode
-    }
-// Declaring Initial Edges and Nodes
-const initialEdges = []; //Edge is connected with source node with id 1 and target node with id 2
-const initialNodes = [ //Basic initial node declaration
+    "editable": EditableNode
+};
+
+// We define initial nodes outside, but they won't have the handler functions yet.
+// We will add them dynamically inside the main component.
+const initialNodes = [
     { id: '1', type: 'editable', position: { x: 50, y: 50 }, data: { label: "Node 1" } },
     { id: '2', type: 'editable', position: { x: 400, y: 50 }, data: { label: "Node 2" } },
 ];
 
-function EditableNode({ id, data }) {
-    const { setNodes } = useReactFlow();
-    const inputRef = useRef(null);
+const initialEdges = [];
 
-    const onLabelChange = useCallback((evt) => {
-        const newLabel = evt.target.value;
+function Flow() {
+    const reactFlowInstance = useReactFlow();
+    const [nodes, setNodes] = useState(initialNodes);
+    const [edges, setEdges] = useState(initialEdges);
 
-        setNodes((nds) => {
-            nds.map((node) => {
+    const onNodesChange = useCallback(
+        (changes) => setNodes((nds) => applyNodeChanges(changes, nds)),
+        [setNodes]
+    );
+    const onEdgesChange = useCallback(
+        (changes) => setEdges((eds) => applyEdgeChanges(changes, eds)),
+        [setEdges]
+    );
+    const onConnect = useCallback(
+        (connection) => setEdges((eds) => addEdge(connection, eds)),
+        [setEdges]
+    );
+
+    // =========================================================================================
+    // STEP 3: Create the handler functions that will be passed to the nodes.
+    // We use useCallback to prevent these functions from being recreated on every render.
+    // =========================================================================================
+
+    // This function updates the label of a specific node.
+    const onNodeLabelChange = useCallback((id, newLabel) => {
+        setNodes((currentNodes) =>
+            currentNodes.map((node) => {
                 if (node.id === id) {
-                    node.data = { ...node.data, label: newLabel };
+                    return { ...node, data: { ...node.data, label: newLabel } };
                 }
                 return node;
             })
-        });
+        );
+    }, [setNodes]);
 
-
-    }, [id, setNodes]);
-
+    // This function sets the `isEditing` flag for a specific node.
+    const setNodeEditing = useCallback((id, isEditing) => {
+        setNodes((currentNodes) =>
+            currentNodes.map((node) => {
+                if (node.id === id) {
+                    // Set the editing flag for the target node
+                    return { ...node, data: { ...node.data, isEditing } };
+                }
+                // Important: Also set all other nodes to NOT be editing
+                return { ...node, data: { ...node.data, isEditing: false } };
+            })
+        );
+    }, [setNodes]);
     
+    // This handler is called when a node is double-clicked.
+    const handleNodeDoubleClick = useCallback((event, node) => {
+        event.stopPropagation(); // Prevent the pane double-click from firing
+        setNodeEditing(node.id, true);
+    }, [setNodeEditing]);
 
-    return (
-        <>
-            
-            <Handle type="source" position="top" id="top-source" />
-                {data.isEditing ? <input type="text" value={data.label}/> : data.label}
-            <Handle type="target" position="bottom"id="bottom-target" />
-    </>
-    );
-}
-
-// The main component which has two initial nodes connected with an edge.
-function Flow() {
-    // useReactFlow is a hook that returns the React Flow instance.
-    const reactFlowInstance = useReactFlow(); //Initializing `Project` object
-    // useState is a hook that lets you add React state to function components.
-    const [nodes, setNodes] = useState(initialNodes); //Declaring state functions for nodes
-    const [edges, setEdges] = useState(initialEdges); //Declaring state functions for edges
-
-    // onNodesChange is called when a node is moved, selected, or removed.
-    const onNodesChange = useCallback( //useCallback improves React's performance
-    (changes) => {
-      setNodes((oldNodes) => applyNodeChanges(changes, oldNodes));
-    },
-    [setNodes],
-  );
-
-    // onDoubleClick is called when the pane is double-clicked.
-    const onDoubleClick = (event) => {
-        // screenToFlowPosition converts screen coordinates to flow coordinates.
+    // This handler is called when the pane is double-clicked.
+    const onPaneDoubleClick = useCallback((event) => {
         const position = reactFlowInstance.screenToFlowPosition({
             x: event.clientX,
             y: event.clientY,
         });
-        // A new node is created with the position of the double-click.
         const newNode = {
             id: (nodes.length + 1).toString(),
             type: "editable",
-            position: position,
-            data: {label: "New Node"}
+            position,
+            data: { label: "New Node" }
         };
-        // The new node is added to the existing nodes.
-        setNodes([...nodes, newNode])
-    };
-
-    const handleNodeDoubleClick = (event, node) => {
-        //This function stops from 'bubbling up' the double click
-        event.stopPropagation();
-
-        setNodes(nodes.map((currentNode) => {
-            if (currentNode.id === node.id) {
-                return { ...currentNode, data: { ...currentNode.data ,  isEditing: true} };
-            } else {
-                return currentNode;
-            }
-        }));
-    }
+        setNodes((currentNodes) => [...currentNodes, newNode]);
+    }, [reactFlowInstance, nodes]);
     
-    // onEdgesChange is called when an edge is moved, selected, or removed.
-    const onEdgesChange = useCallback(
-        (change) => {
-            setEdges((oldEdge) => applyEdgeChanges(change, oldEdge))
-        },
-        [setEdges],
-    );
-    
-    // onConnect is called when a new connection is made.
-    const onConnect = useCallback(
-        (changes) => {
-            setEdges((oldEdges) => addEdge(changes, oldEdges))
-        },
-        [setEdges],
-    );
+
+    // =========================================================================================
+    // STEP 4: Dynamically add the handler functions to each node's data object.
+    // This is the magic step that makes the handlers available inside the custom node.
+    // =========================================================================================
+    const nodesWithHandlers = nodes.map(node => ({
+        ...node,
+        data: {
+            ...node.data,
+            onLabelChange: onNodeLabelChange,
+            setEditing: (isEditing) => setNodeEditing(node.id, isEditing),
+        }
+    }));
 
     return (
-        // The onDoubleClick event is attached to the div.
-        <div style={{ height: '100vh' }} onDoubleClick={onDoubleClick}>
+        <div style={{ height: '100vh' }}>
             <ReactFlow
-                connectionMode="loose"
-                nodes={nodes}
+                nodes={nodesWithHandlers} // CHANGED: Use the nodes with injected handlers
                 edges={edges}
-                zoomOnDoubleClick={false}
+                nodeTypes={nodeTypes}
                 onNodesChange={onNodesChange}
                 onEdgesChange={onEdgesChange}
                 onConnect={onConnect}
-                onNodeDoubleClick={handleNodeDoubleClick}
-                nodeTypes={nodeTypes}
+                onNodeDoubleClick={handleNodeDoubleClick} // CHANGED: Renamed for clarity
+                onPaneDoubleClick={onPaneDoubleClick} // CHANGED: Use the specific pane handler
+                zoomOnDoubleClick={false} // This is correct, we disabled it for our custom action
+                onDoubleClick={onPaneDoubleClick}
+                connectionMode="loose"
                 isValidConnection={() => true}
             >
-                <Background/>
+                <Background />
             </ReactFlow>
         </div>
     );
 }
 
-// The App component is the root component of the application.
 export default function App() {
     return (
-        // ReactFlowProvider provides the React Flow context to its children.
         <ReactFlowProvider>
             <Flow />
         </ReactFlowProvider>
