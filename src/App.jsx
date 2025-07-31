@@ -30,8 +30,9 @@ function EditableNode({ id, data }) {
     };
 
     return (
-        <div style={{ padding: 10, borderRadius: 5, background: '#A5D6A7' }}>
-            <Handle type="source" position="top" id="a" />
+        <div style={{ padding: '10px 15px', borderRadius: '8px' }}>
+            <Handle type="source" position="top" id="top" />
+            <Handle type="source" position="right" id="right" />
             {data.isEditing ? (
                 <input
                     type="text"
@@ -46,7 +47,8 @@ function EditableNode({ id, data }) {
                 // When not editing, just display the label.
                 <span>{data.label}</span>
             )}
-            <Handle type="target" position="bottom" id="b" />
+            <Handle type="source" position="bottom" id="bottom" />
+            <Handle type="source" position="left" id="left" />
         </div>
     );
 }
@@ -166,6 +168,15 @@ function Flow() {
                 onDoubleClick={onPaneDoubleClick}
                 connectionMode="loose"
                 isValidConnection={() => true}
+                defaultEdgeOptions={{
+                animated: false,
+                // style: { stroke: '#C5C5C5' }, // A nice light gray for the edge
+                markerEnd: {
+                    type: 'arrowclosed',
+                    color: '#C5C5C5',
+                },
+    }}
+
             >
                 <Background />
             </ReactFlow>
