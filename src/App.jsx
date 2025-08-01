@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import ReactFlow, {
     addEdge,
     applyEdgeChanges,
@@ -71,8 +71,18 @@ const initialEdges = [];
 
 function Flow() {
     const reactFlowInstance = useReactFlow();
-    const [nodes, setNodes] = useState(initialNodes);
-    const [edges, setEdges] = useState(initialEdges);
+    const [nodes, setNodes] = useState(() => {
+        if (localStorage.getItem('flow-nodes')) {
+            return JSON.parse(localStorage.getItem('flow-nodes'));
+        }
+        return initialNodes;
+    });
+    const [edges, setEdges] = useState(() => {
+        if (localStorage.getItem('flow-edges')) {
+            return JSON.parse(localStorage.getItem('flow-edges'));
+        }
+        return initialEdges;
+    });
 
     const onNodesChange = useCallback(
         (changes) => setNodes((nds) => applyNodeChanges(changes, nds)),
@@ -153,6 +163,27 @@ function Flow() {
         }
     }));
 
+    useEffect(() => {
+        localStorage.setItem('flow-nodes', JSON.stringify(nodes))
+    }, [nodes]);
+
+    useEffect(() => {
+        localStorage.setItem('flow-edges', JSON.stringify(edges))
+    }, [edges]);
+
+    const loadLocalStorage = () => {
+        let nodes = localStorage.getItem('flow-nodes');
+        let edges = localStorage.getItem('flow-edges');
+
+        if (nodes == null) {
+            return initialNodes;
+        } else if (edges == null) {
+           return [] 
+        }
+        return JSON.parse(nodes), JSON.parse(edges);
+
+    }
+    
     return (
         <div style={{ height: '100vh' }}>
             <ReactFlow
