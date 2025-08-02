@@ -144,11 +144,12 @@ function Flow() {
             id: (nodes.length + 1).toString(),
             type: "editable",
             position,
-            data: { label: "New Node" }
+            data: { label: "New Node" , isEditing: true}
         };
         setNodes((currentNodes) => [...currentNodes, newNode]);
     }, [reactFlowInstance, nodes]);
-    
+
+  
 
     // =========================================================================================
     // STEP 4: Dynamically add the handler functions to each node's data object.
@@ -185,8 +186,9 @@ function Flow() {
     }
     
     return (
-        <div style={{ height: '100vh' }}>
+        <div style={{height: '100%'}}>
             <ReactFlow
+                
                 nodes={nodesWithHandlers} // CHANGED: Use the nodes with injected handlers
                 edges={edges}
                 nodeTypes={nodeTypes}
@@ -215,10 +217,26 @@ function Flow() {
     );
 }
 
+function TutorialPanel() {
+    return (
+        <div className="tutorial-container">
+            <p>Instructions:</p>
+            <ul>
+                <li>Double click the pane to add a new node.</li>
+                <li>Select a node/edge and press backspace to delete it.</li>
+                <li>Double click a node to edit its content.</li>
+            </ul>
+        </div>
+    );
+}
+
 export default function App() {
     return (
-        <ReactFlowProvider>
-            <Flow />
+        <ReactFlowProvider >
+            <div className="flow-container" style={{ height: '100vh' }}>
+                <Flow />
+                <TutorialPanel />
+            </div>
         </ReactFlowProvider>
     );
 }
