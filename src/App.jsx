@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useMemo } from "react";
 import ReactFlow, {
   addEdge,
   applyEdgeChanges,
@@ -175,14 +175,16 @@ function Flow() {
   // STEP 4: Dynamically add the handler functions to each node's data object.
   // This is the magic step that makes the handlers available inside the custom node.
   // =========================================================================================
-  const nodesWithHandlers = nodes.map((node) => ({
-    ...node,
-    data: {
-      ...node.data,
-      onLabelChange: onNodeLabelChange,
-      setEditing: (isEditing) => setNodeEditing(node.id, isEditing),
-    },
-  }));
+  const nodesWithHandlers = useMemo(() => {
+    return nodes.map((node) => ({
+      ...node,
+      data: {
+        ...node.data,
+        onLabelChange: onNodeLabelChange,
+        setEditing: (isEditing) => setNodeEditing(node.id, isEditing),
+      },
+    }));
+  }, [nodes, onNodeLabelChange, setNodeEditing]);
 
   useEffect(() => {
     localStorage.setItem("flow-nodes", JSON.stringify(nodes));
