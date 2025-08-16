@@ -1,0 +1,28 @@
+/* src/Toolbar.css */
+.toolbar {
+  position: absolute; /* Makes it float over the canvas */
+  left: 50%; /* Moves its left edge to the center of the screen */
+  transform: translateX(-50%); /* Shifts it left by half of its own width */
+  bottom: 20px; /* Positions it 20px from the bottom */
+
+  background-color: #2d333b;
+  padding: 8px;
+  border-radius: 8px;
+  border: 1px solid #e2e2e2;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  display: flex;
+  gap: 10px;
+}
+
+.toolbar button {
+  padding: 8px 12px;
+  border-radius: 6px;
+  border: 1px solid #052538;
+  background-color: #202935;
+  cursor: pointer;
+  transition: ease 0.4s;
+}
+
+.toolbar button:hover {
+  background-color: #556377;
+}

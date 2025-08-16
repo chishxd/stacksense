@@ -9,6 +9,7 @@ import ReactFlow, {
   useReactFlow,
 } from "reactflow";
 import "reactflow/dist/style.css";
+import Toolbar from "./Toolbar";
 
 // =========================================================================================
 // STEP 1: Define the custom node. It will receive its id and data props from React Flow.
@@ -93,6 +94,24 @@ function Flow() {
     }
     return initialEdges;
   });
+
+  const onAddNode = useCallback(() => {
+    const screenCenterX = window.innerWidth / 2;
+    const screenCenterY = window.innerHeight / 2;
+
+    const centerPosition = reactFlowInstance.screenToFlowPosition({
+      x: screenCenterX,
+      y: screenCenterY,
+    });
+
+    const newNode = {
+      id: new Date().getTime().toString(),
+      type: "editable",
+      position: centerPosition,
+      data: { label: "New Node", isEditing: true },
+    };
+    setNodes((currentNodes) => [...currentNodes, newNode]);
+  }, [reactFlowInstance, nodes]);
 
   const onNodesChange = useCallback(
     (changes) => setNodes((nds) => applyNodeChanges(changes, nds)),
@@ -232,6 +251,7 @@ function Flow() {
       >
         <Background />
       </ReactFlow>
+      <Toolbar onAddNode={onAddNode} />
     </div>
   );
 }
