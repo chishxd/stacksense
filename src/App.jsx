@@ -95,6 +95,13 @@ function Flow() {
     return initialEdges;
   });
 
+  const [selectedNodes, setSelectedNodes] = useState([]);
+
+  const onSelectionChange = useCallback(({ nodes, edges }) => {
+    // We only care about the nodes for now
+    setSelectedNodes(nodes);
+  }, []);
+
   const onAddNode = useCallback(() => {
     const screenCenterX = window.innerWidth / 2;
     const screenCenterY = window.innerHeight / 2;
@@ -125,6 +132,24 @@ function Flow() {
     (connection) => setEdges((eds) => addEdge(connection, eds)),
     [setEdges]
   );
+
+  const onDeleteNode = useCallback(() => {
+    const idsToDelete = selectedNodes.map((node) => node.id);
+
+    setNodes((currentNodes) =>
+      currentNodes.filter((node) => !idsToDelete.includes(node.id))
+    );
+
+    setEdges((currentEdges) =>
+      currentEdges.filter(
+        (edge) =>
+          !idsToDelete.includes(edge.source) &&
+          !idsToDelete.includes(edge.target)
+      )
+    );
+
+    setSelectedNodes([]);
+  }, [selectedNodes, setNodes, setEdges]);
 
   // =========================================================================================
   // STEP 3: Create the handler functions that will be passed to the nodes.
@@ -240,6 +265,7 @@ function Flow() {
         onDoubleClick={onPaneDoubleClick}
         connectionMode="loose"
         isValidConnection={() => true}
+        onSelectionChange={onSelectionChange}
         defaultEdgeOptions={{
           animated: false,
           // style: { stroke: '#C5C5C5' }, // A nice light gray for the edge
@@ -251,7 +277,7 @@ function Flow() {
       >
         <Background />
       </ReactFlow>
-      <Toolbar onAddNode={onAddNode} />
+      <Toolbar onAddNode={onAddNode} onDeleteNode={onDeleteNode} />
     </div>
   );
 }
