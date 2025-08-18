@@ -1,18 +1,35 @@
 import "./Sidebar.css";
 import { useState, useEffect } from "react";
 
-function Sidebar({ selectedNode, onLabelChange }) {
+function Sidebar({ selectedNode, onLabelChange, onNodeColorChange }) {
   // Local state to manage the input value and avoid focus loss on parent re-renders
   const [label, setLabel] = useState(selectedNode.data.label);
+
+  // Local state for the color picker to allow immediate UI updates
+  const [color, setColor] = useState(
+    selectedNode.style?.backgroundColor || "#ffffff"
+  );
 
   useEffect(() => {
     setLabel(selectedNode.data.label);
   }, [selectedNode.data.label]);
 
+  // Sync color state when selectedNode style changes externally
+  useEffect(() => {
+    setColor(selectedNode.style?.backgroundColor || "#ffffff");
+  }, [selectedNode.style?.backgroundColor]);
+
   const handleLabelChange = (event) => {
     const newValue = event.target.value;
     setLabel(newValue);
     onLabelChange(selectedNode.id, newValue);
+  };
+
+  // Handler for the color input that passes node ID and selected color value
+  const handleColorChange = (event) => {
+    const newColor = event.target.value;
+    setColor(newColor);
+    onNodeColorChange(selectedNode.id, newColor);
   };
 
   return (
@@ -26,6 +43,16 @@ function Sidebar({ selectedNode, onLabelChange }) {
           type="text"
           value={label}
           onChange={handleLabelChange}
+        />
+      </div>
+      <div className="color-chooser">
+        <label>Background:</label>
+        <input
+          className="color-input"
+          type="color"
+          name="node-color"
+          value={color}
+          onChange={handleColorChange}
         />
       </div>
     </div>
