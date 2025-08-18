@@ -311,7 +311,7 @@ export default function App() {
         <button className="help-button" onClick={toggleTutorialPane}>
           ?
         </button>
-        <TutorialPanel />
+        {isTutorialOpen && <TutorialPanel />}
       </div>
     </ReactFlowProvider>
   );
