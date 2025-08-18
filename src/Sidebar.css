@@ -1,0 +1,31 @@
+/* src/Sidebar.css */
+.sidebar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 260px;
+  height: 100%;
+  background-color: #1e1e1e;
+  border-right: 1px solid #202633;
+  box-shadow: -2px 0 10px rgba(0, 0, 0, 0.05);
+  padding: 20px;
+  z-index: 10; /* Make sure it's above the canvas grid */
+}
+
+.label-data {
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: none;
+  margin-left: 15px;
+}
+
+.data-edit-container {
+  margin-top: 30px;
+}
+
+.color-chooser {
+  margin-top: 20px;
+}
+.color-chooser .color-input {
+  margin-left: 20px;
+}

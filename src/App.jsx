@@ -10,6 +10,7 @@ import ReactFlow, {
 } from "reactflow";
 import "reactflow/dist/style.css";
 import Toolbar from "./Toolbar";
+import Sidebar from "./Sidebar";
 
 // =========================================================================================
 // STEP 1: Define the custom node. It will receive its id and data props from React Flow.
@@ -126,6 +127,24 @@ function Flow() {
     (changes) => setNodes((nds) => applyNodeChanges(changes, nds)),
     [setNodes]
   );
+
+  const onNodeColorChange = useCallback(
+    (id, newColor) => {
+      setNodes((currentNodes) =>
+        currentNodes.map((node) => {
+          if (node.id === id) {
+            return {
+              ...node,
+              style: { ...node.style, backgroundColor: newColor },
+            };
+          }
+          return node;
+        })
+      );
+    },
+    [setNodes]
+  );
+
   const onEdgesChange = useCallback(
     (changes) => setEdges((eds) => applyEdgeChanges(changes, eds)),
     [setEdges]
@@ -279,6 +298,14 @@ function Flow() {
       >
         <Background />
       </ReactFlow>
+      {selectedNodes.length === 1 && (
+        <Sidebar
+          key={selectedNodes[0].id}
+          selectedNode={selectedNodes[0]}
+          onLabelChange={onNodeLabelChange}
+          onNodeColorChange={onNodeColorChange}
+        />
+      )}
       <Toolbar onAddNode={onAddNode} onDeleteNode={onDeleteNode} />
     </div>
   );
