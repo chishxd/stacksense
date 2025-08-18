@@ -5,7 +5,7 @@
   transform: translateX(-50%); /* Shifts it left by half of its own width */
   bottom: 20px; /* Positions it 20px from the bottom */
 
-  background-color: #2d333b;
+  backdrop-filter: blur(10px);
   padding: 8px;
   border-radius: 8px;
   border: 1px solid #e2e2e2;

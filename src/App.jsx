@@ -82,12 +82,14 @@ const initialEdges = [];
 
 function Flow() {
   const reactFlowInstance = useReactFlow();
+
   const [nodes, setNodes] = useState(() => {
     if (localStorage.getItem("flow-nodes")) {
       return JSON.parse(localStorage.getItem("flow-nodes"));
     }
     return initialNodes;
   });
+
   const [edges, setEdges] = useState(() => {
     if (localStorage.getItem("flow-edges")) {
       return JSON.parse(localStorage.getItem("flow-edges"));
@@ -296,10 +298,19 @@ function TutorialPanel() {
 }
 
 export default function App() {
+  const [isTutorialOpen, setIsTutorialOpen] = useState(true);
+
+  const toggleTutorialPane = () => {
+    setIsTutorialOpen(!isTutorialOpen);
+  };
+
   return (
     <ReactFlowProvider>
       <div className="flow-container" style={{ height: "100vh" }}>
         <Flow />
+        <button className="help-button" onClick={toggleTutorialPane}>
+          ?
+        </button>
         <TutorialPanel />
       </div>
     </ReactFlowProvider>
