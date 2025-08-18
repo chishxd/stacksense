@@ -127,6 +127,24 @@ function Flow() {
     (changes) => setNodes((nds) => applyNodeChanges(changes, nds)),
     [setNodes]
   );
+
+  const onNodeColorChange = useCallback(
+    (id, newColor) => {
+      setNodes((currentNodes) =>
+        currentNodes.map((node) => {
+          if (node.id === id) {
+            return {
+              ...node,
+              style: { ...node.style, backgroundColor: newColor },
+            };
+          }
+          return node;
+        })
+      );
+    },
+    [setNodes]
+  );
+
   const onEdgesChange = useCallback(
     (changes) => setEdges((eds) => applyEdgeChanges(changes, eds)),
     [setEdges]
@@ -285,6 +303,7 @@ function Flow() {
           key={selectedNodes[0].id}
           selectedNode={selectedNodes[0]}
           onLabelChange={onNodeLabelChange}
+          onNodeColorChange={onNodeColorChange}
         />
       )}
       <Toolbar onAddNode={onAddNode} onDeleteNode={onDeleteNode} />
