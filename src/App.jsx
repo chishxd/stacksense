@@ -10,6 +10,7 @@ import ReactFlow, {
 } from "reactflow";
 import "reactflow/dist/style.css";
 import Toolbar from "./Toolbar";
+import Sidebar from "./Sidebar";
 
 // =========================================================================================
 // STEP 1: Define the custom node. It will receive its id and data props from React Flow.
@@ -279,6 +280,7 @@ function Flow() {
       >
         <Background />
       </ReactFlow>
+      {selectedNodes.length === 1 && <Sidebar />}
       <Toolbar onAddNode={onAddNode} onDeleteNode={onDeleteNode} />
     </div>
   );
