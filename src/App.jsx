@@ -280,7 +280,13 @@ function Flow() {
       >
         <Background />
       </ReactFlow>
-      {selectedNodes.length === 1 && <Sidebar />}
+      {selectedNodes.length === 1 && (
+        <Sidebar
+          key={selectedNodes[0].id}
+          selectedNode={selectedNodes[0]}
+          onLabelChange={onNodeLabelChange}
+        />
+      )}
       <Toolbar onAddNode={onAddNode} onDeleteNode={onDeleteNode} />
     </div>
   );
