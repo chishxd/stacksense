@@ -1,3 +1,37 @@
+.help-button {
+  position: absolute; /* Float it over other content */
+  top: 15px;
+  right: 15px;
+  z-index: 10; /* Make sure it's above the canvas */
+
+  width: 50px;
+  height: 50px;
+  border-radius: 50%; /* Makes it a circle */
+  border: 1px solid #ccc;
+  background-color: rgb(0, 0, 0);
+  font-size: 20px;
+  font-weight: bold;
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.tutorial-container {
+  position: absolute;
+  top: 0;
+  right: 0;
+  background-color: #00143465;
+  backdrop-filter: blur(10px);
+  padding: 10px 15px;
+  margin: 15px;
+  border-radius: 8px;
+}
+
+.flow-container {
+  position: relative;
+}
+
 .react-flow__pane .react-flow__edge-path {
   stroke: #9e9e9e;
   stroke-width: 3px;
