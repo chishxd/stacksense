@@ -14,8 +14,8 @@ import Sidebar from "./Sidebar";
 import { getContrastColor } from "./utils/colorUtils";
 
 // =========================================================================================
-// STEP 1: Define the custom node. It will receive its id and data props from React Flow.
-// The `data` prop will contain the functions we pass to it later.
+// CUSTOM NODE: EditableNode supports in-place label editing and applies contrast-aware text color.
+// - Props: id (string), data: { label, isEditing, onLabelChange, setEditing }
 // =========================================================================================
 function EditableNode({ id, data }) {
   // This function is called when the input value changes.
@@ -56,22 +56,21 @@ function EditableNode({ id, data }) {
   );
 }
 
-// =========================================================================================
-// STEP 2: Register our custom node type.
-// =========================================================================================
+// Register custom node types so React Flow can render your EditableNode component.
 const nodeTypes = {
   editable: EditableNode,
 };
 
-// We define initial nodes outside, but they won't have the handler functions yet.
-// We will add them dynamically inside the main component.
+// Initial node definitions: these nodes appear on load or when no saved state exists.
 const initialNodes = [
+  // Node 1 at top-left
   {
     id: "1",
     type: "editable",
     position: { x: 50, y: 50 },
     data: { label: "Node 1" },
   },
+  // Node 2 to the right of Node 1
   {
     id: "2",
     type: "editable",
@@ -80,8 +79,10 @@ const initialNodes = [
   },
 ];
 
+// Empty edge list by default; new connections will populate this.
 const initialEdges = [];
 
+// Flow component: handles rendering the graph, node/edge state, persistence, and user interactions.
 function Flow() {
   const reactFlowInstance = useReactFlow();
 
@@ -128,8 +129,6 @@ function Flow() {
     (changes) => setNodes((nds) => applyNodeChanges(changes, nds)),
     [setNodes]
   );
-
-  // Inside Flow.jsx
 
   const onNodeColorChange = useCallback(
     (nodeId, newColor) => {
@@ -245,6 +244,22 @@ function Flow() {
     [reactFlowInstance, nodes]
   );
 
+  const onExport = useCallback(() => {
+    const dataToSave = { nodes, edges };
+    const jsonString = JSON.stringify(dataToSave, null, 2);
+
+    const blob = new Blob([jsonString], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "stacksense-map.json";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  }, [nodes, edges]);
+
   // =========================================================================================
   // STEP 4: Dynamically add the handler functions to each node's data object.
   // This is the magic step that makes the handlers available inside the custom node.
@@ -315,7 +330,11 @@ function Flow() {
           onNodeColorChange={onNodeColorChange}
         />
       )}
-      <Toolbar onAddNode={onAddNode} onDeleteNode={onDeleteNode} />
+      <Toolbar
+        onAddNode={onAddNode}
+        onDeleteNode={onDeleteNode}
+        onExport={onExport}
+      />
     </div>
   );
 }
