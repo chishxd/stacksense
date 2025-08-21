@@ -11,6 +11,7 @@ import ReactFlow, {
 import "reactflow/dist/style.css";
 import Toolbar from "./Toolbar";
 import Sidebar from "./Sidebar";
+import { getContrastColor } from "./utils/colorUtils";
 
 // =========================================================================================
 // STEP 1: Define the custom node. It will receive its id and data props from React Flow.
@@ -128,14 +129,22 @@ function Flow() {
     [setNodes]
   );
 
+  // Inside Flow.jsx
+
   const onNodeColorChange = useCallback(
-    (id, newColor) => {
+    (nodeId, newColor) => {
+      const textColor = getContrastColor(newColor);
+
       setNodes((currentNodes) =>
         currentNodes.map((node) => {
-          if (node.id === id) {
+          if (node.id === nodeId) {
             return {
               ...node,
-              style: { ...node.style, backgroundColor: newColor },
+              style: {
+                ...node.style,
+                backgroundColor: newColor,
+                color: textColor,
+              },
             };
           }
           return node;
