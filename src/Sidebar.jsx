@@ -6,9 +6,7 @@ function Sidebar({ selectedNode, onLabelChange, onNodeColorChange }) {
   const [label, setLabel] = useState(selectedNode.data.label);
 
   // Local state for the color picker to allow immediate UI updates
-  const [color, setColor] = useState(
-    selectedNode.style?.backgroundColor || "#ffffff"
-  );
+  const [color, setColor] = useState(selectedNode.style?.backgroundColor);
 
   useEffect(() => {
     setLabel(selectedNode.data.label);
@@ -16,7 +14,7 @@ function Sidebar({ selectedNode, onLabelChange, onNodeColorChange }) {
 
   // Sync color state when selectedNode style changes externally
   useEffect(() => {
-    setColor(selectedNode.style?.backgroundColor || "#ffffff");
+    setColor(selectedNode.style?.backgroundColor);
   }, [selectedNode.style?.backgroundColor]);
 
   const handleLabelChange = (event) => {
@@ -37,7 +35,7 @@ function Sidebar({ selectedNode, onLabelChange, onNodeColorChange }) {
       <h2>Style Editor</h2>
       <hr />
       <div className="data-edit-container">
-        <label>Label: </label>
+        <label>Label: </label>3
         <input
           className="label-data"
           type="text"
