@@ -244,6 +244,37 @@ function Flow() {
     [reactFlowInstance, nodes]
   );
 
+  const onImport = useCallback(
+    (event) => {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+
+      reader.onload = (e) => {
+        const text = e.target.result;
+        try {
+          const data = JSON.parse(text);
+          // Basic validation: check if nodes and edges exist
+          if (data && data.nodes && data.edges) {
+            setNodes(data.nodes);
+            setEdges(data.edges);
+          } else {
+            alert("Invalid map file.");
+          }
+        } catch (error) {
+          console.error("Error parsing JSON file:", error);
+          alert("Could not import map. The file may be corrupted.");
+        }
+      };
+
+      reader.readAsText(file);
+
+      event.target.value = null;
+    },
+    [setNodes, setEdges]
+  );
+
   const onExport = useCallback(() => {
     const dataToSave = { nodes, edges };
     const jsonString = JSON.stringify(dataToSave, null, 2);
@@ -333,6 +364,7 @@ function Flow() {
       <Toolbar
         onAddNode={onAddNode}
         onDeleteNode={onDeleteNode}
+        onImport={onImport}
         onExport={onExport}
       />
     </div>
