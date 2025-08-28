@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, useMemo } from "react";
+import { useState, useCallback, useEffect, useMemo, useRef } from "react";
 import ReactFlow, {
   addEdge,
   applyEdgeChanges,
@@ -84,28 +84,73 @@ const initialEdges = [];
 
 // Flow component: handles rendering the graph, node/edge state, persistence, and user interactions.
 function Flow() {
-  const reactFlowInstance = useReactFlow();
+  const [history, setHistory] = useState(() => {
+    try {
+      const savedHistory = localStorage.getItem("flow-history");
+      if (savedHistory) {
+        const parsedHistory = JSON.parse(savedHistory);
 
-  const [nodes, setNodes] = useState(() => {
-    if (localStorage.getItem("flow-nodes")) {
-      return JSON.parse(localStorage.getItem("flow-nodes"));
+        if (Array.isArray(parsedHistory) && parsedHistory.length > 0) {
+          return parsedHistory;
+        }
+      }
+    } catch (error) {
+      console.error("Failed to load history from localStorage ", error);
     }
-    return initialNodes;
+
+    return [{ nodes: initialNodes, edges: initialEdges }];
   });
 
-  const [edges, setEdges] = useState(() => {
-    if (localStorage.getItem("flow-edges")) {
-      return JSON.parse(localStorage.getItem("flow-edges"));
+  const [historyIndex, setHistoryIndex] = useState(() => {
+    try {
+      const savedHistoryIndex = localStorage.getItem("flow-history-index");
+      if (savedHistoryIndex) {
+        const parsedHistoryIndex = JSON.parse(savedHistoryIndex);
+
+        if (typeof parsedHistoryIndex === "number") {
+          return parsedHistoryIndex;
+        }
+      }
+    } catch (error) {
+      console.error("Failed to load history index from localStorage ", error);
     }
-    return initialEdges;
+
+    return 0;
+  });
+
+  const canUndo = historyIndex > 0;
+  const canRedo = historyIndex < history.length - 1;
+
+  const currentNodes = history[historyIndex].nodes;
+  const currentEdges = history[historyIndex].edges;
+
+  const reactFlowInstance = useReactFlow();
+
+  // This ref helps distinguish between internal React Flow changes (drag, select) and explicit changes (add, delete).
+  const isInternalChange = useRef(false);
+
+  // This effect resets the flag after a state update.
+  useEffect(() => {
+    isInternalChange.current = false;
   });
 
   const [selectedNodes, setSelectedNodes] = useState([]);
 
-  const onSelectionChange = useCallback(({ nodes, edges }) => {
-    // We only care about the nodes for now
+  const onSelectionChange = useCallback(({ nodes }) => {
     setSelectedNodes(nodes);
   }, []);
+
+  const recordChange = useCallback(
+    ({ newNodes, newEdges }) => {
+      const pastHistory = history.slice(0, historyIndex + 1);
+      const present = { nodes: newNodes, edges: newEdges };
+      const newHistory = [...pastHistory, present];
+
+      setHistory(newHistory);
+      setHistoryIndex(newHistory.length - 1);
+    },
+    [history, historyIndex]
+  );
 
   const onAddNode = useCallback(() => {
     const screenCenterX = window.innerWidth / 2;
@@ -120,65 +165,106 @@ function Flow() {
       id: new Date().getTime().toString(),
       type: "editable",
       position: centerPosition,
-      data: { label: "New Node", isEditing: true },
+      data: { label: "New Node", isEditing: false },
     };
-    setNodes((currentNodes) => [...currentNodes, newNode]);
-  }, [reactFlowInstance, nodes]);
+
+    const newNodes = [...currentNodes, newNode];
+    const newEdges = currentEdges;
+
+    recordChange({ newNodes, newEdges });
+  }, [reactFlowInstance, currentNodes, currentEdges, recordChange]);
 
   const onNodesChange = useCallback(
-    (changes) => setNodes((nds) => applyNodeChanges(changes, nds)),
-    [setNodes]
+    (changes) => {
+      const newNodes = applyNodeChanges(changes, currentNodes);
+
+      // For internal changes (like dragging), we update the current history state
+      // without creating a new entry. This prevents polluting the history.
+      if (isInternalChange.current) {
+        const currentHistory = [...history];
+        currentHistory[historyIndex] = {
+          ...currentHistory[historyIndex],
+          nodes: newNodes,
+        };
+        setHistory(currentHistory);
+      } else {
+        // For explicit changes, we record a new history entry.
+        recordChange({ newNodes, newEdges: currentEdges });
+      }
+      // We set this flag before the next render cycle.
+      isInternalChange.current = true;
+    },
+    [currentNodes, currentEdges, history, historyIndex, recordChange]
   );
 
   const onNodeColorChange = useCallback(
     (nodeId, newColor) => {
       const textColor = getContrastColor(newColor);
 
-      setNodes((currentNodes) =>
-        currentNodes.map((node) => {
-          if (node.id === nodeId) {
-            return {
-              ...node,
-              style: {
-                ...node.style,
-                backgroundColor: newColor,
-                color: textColor,
-              },
-            };
-          }
-          return node;
-        })
-      );
+      const newNodes = currentNodes.map((node) => {
+        if (node.id === nodeId) {
+          return {
+            ...node,
+            style: {
+              ...node.style,
+              backgroundColor: newColor,
+              color: textColor,
+            },
+          };
+        }
+        return node;
+      });
+
+      const newEdges = currentEdges;
+
+      recordChange({ newNodes, newEdges });
     },
-    [setNodes]
+    [currentNodes, currentEdges, recordChange]
   );
 
   const onEdgesChange = useCallback(
-    (changes) => setEdges((eds) => applyEdgeChanges(changes, eds)),
-    [setEdges]
+    (changes) => {
+      const newEdges = applyEdgeChanges(changes, currentEdges);
+
+      // Similar to onNodesChange, we update the current history state for internal changes.
+      if (isInternalChange.current) {
+        const currentHistory = [...history];
+        currentHistory[historyIndex] = {
+          ...currentHistory[historyIndex],
+          edges: newEdges,
+        };
+        setHistory(currentHistory);
+      } else {
+        recordChange({ newNodes: currentNodes, newEdges });
+      }
+      isInternalChange.current = true;
+    },
+    [currentNodes, currentEdges, history, historyIndex, recordChange]
   );
+
   const onConnect = useCallback(
-    (connection) => setEdges((eds) => addEdge(connection, eds)),
-    [setEdges]
+    (connection) => {
+      const newEdges = addEdge(connection, currentEdges);
+      recordChange({ newNodes: currentNodes, newEdges });
+    },
+    [currentNodes, currentEdges, recordChange]
   );
 
   const onDeleteNode = useCallback(() => {
     const idsToDelete = selectedNodes.map((node) => node.id);
 
-    setNodes((currentNodes) =>
-      currentNodes.filter((node) => !idsToDelete.includes(node.id))
+    const newNodes = currentNodes.filter(
+      (node) => !idsToDelete.includes(node.id)
     );
 
-    setEdges((currentEdges) =>
-      currentEdges.filter(
-        (edge) =>
-          !idsToDelete.includes(edge.source) &&
-          !idsToDelete.includes(edge.target)
-      )
+    const newEdges = currentEdges.filter(
+      (edge) =>
+        !idsToDelete.includes(edge.source) && !idsToDelete.includes(edge.target)
     );
 
+    recordChange({ newNodes, newEdges });
     setSelectedNodes([]);
-  }, [selectedNodes, setNodes, setEdges]);
+  }, [selectedNodes, currentNodes, currentEdges, recordChange]);
 
   // =========================================================================================
   // STEP 3: Create the handler functions that will be passed to the nodes.
@@ -188,33 +274,45 @@ function Flow() {
   // This function updates the label of a specific node.
   const onNodeLabelChange = useCallback(
     (id, newLabel) => {
-      setNodes((currentNodes) =>
-        currentNodes.map((node) => {
-          if (node.id === id) {
-            return { ...node, data: { ...node.data, label: newLabel } };
-          }
-          return node;
-        })
-      );
+      const newNodes = currentNodes.map((node) => {
+        if (node.id === id) {
+          return { ...node, data: { ...node.data, label: newLabel } };
+        }
+        return node;
+      });
+
+      // Directly update the current history state for label changes.
+      const currentHistory = [...history];
+      currentHistory[historyIndex] = {
+        ...currentHistory[historyIndex],
+        nodes: newNodes,
+      };
+      setHistory(currentHistory);
     },
-    [setNodes]
+    [currentNodes, history, historyIndex]
   );
 
   // This function sets the `isEditing` flag for a specific node.
   const setNodeEditing = useCallback(
     (id, isEditing) => {
-      setNodes((currentNodes) =>
-        currentNodes.map((node) => {
-          if (node.id === id) {
-            // Set the editing flag for the target node
-            return { ...node, data: { ...node.data, isEditing } };
-          }
-          // Important: Also set all other nodes to NOT be editing
-          return { ...node, data: { ...node.data, isEditing: false } };
-        })
-      );
+      const newNodes = currentNodes.map((node) => {
+        if (node.id === id) {
+          // Set the editing flag for the target node
+          return { ...node, data: { ...node.data, isEditing } };
+        }
+        // Important: Also set all other nodes to NOT be editing
+        return { ...node, data: { ...node.data, isEditing: false } };
+      });
+
+      // Directly update the current history state for editing changes.
+      const currentHistory = [...history];
+      currentHistory[historyIndex] = {
+        ...currentHistory[historyIndex],
+        nodes: newNodes,
+      };
+      setHistory(currentHistory);
     },
-    [setNodes]
+    [currentNodes, history, historyIndex]
   );
 
   // This handler is called when a node is double-clicked.
@@ -237,11 +335,13 @@ function Flow() {
         id: new Date().getTime().toString(),
         type: "editable",
         position,
-        data: { label: "New Node", isEditing: true },
+        data: { label: "New Node", isEditing: false },
       };
-      setNodes((currentNodes) => [...currentNodes, newNode]);
+      const newNodes = [...currentNodes, newNode];
+
+      recordChange({ newNodes, newEdges: currentEdges });
     },
-    [reactFlowInstance, nodes]
+    [reactFlowInstance, currentNodes, currentEdges, recordChange]
   );
 
   const onImport = useCallback(
@@ -257,8 +357,8 @@ function Flow() {
           const data = JSON.parse(text);
           // Basic validation: check if nodes and edges exist
           if (data && data.nodes && data.edges) {
-            setNodes(data.nodes);
-            setEdges(data.edges);
+            setHistory([{ nodes: data.nodes, edges: data.edges }]);
+            setHistoryIndex(0);
           } else {
             alert("Invalid map file.");
           }
@@ -272,11 +372,11 @@ function Flow() {
 
       event.target.value = null;
     },
-    [setNodes, setEdges]
+    [setHistory, setHistoryIndex]
   );
 
   const onExport = useCallback(() => {
-    const dataToSave = { nodes, edges };
+    const dataToSave = { nodes: currentNodes, edges: currentEdges };
     const jsonString = JSON.stringify(dataToSave, null, 2);
 
     const blob = new Blob([jsonString], { type: "application/json" });
@@ -289,14 +389,14 @@ function Flow() {
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
-  }, [nodes, edges]);
+  }, [currentNodes, currentEdges]);
 
   // =========================================================================================
   // STEP 4: Dynamically add the handler functions to each node's data object.
   // This is the magic step that makes the handlers available inside the custom node.
   // =========================================================================================
   const nodesWithHandlers = useMemo(() => {
-    return nodes.map((node) => ({
+    return currentNodes.map((node) => ({
       ...node,
       data: {
         ...node.data,
@@ -304,40 +404,40 @@ function Flow() {
         setEditing: (isEditing) => setNodeEditing(node.id, isEditing),
       },
     }));
-  }, [nodes, onNodeLabelChange, setNodeEditing]);
+  }, [currentNodes, onNodeLabelChange, setNodeEditing]);
 
+  // This effect persists the history state to localStorage.
   useEffect(() => {
-    localStorage.setItem("flow-nodes", JSON.stringify(nodes));
-  }, [nodes]);
+    localStorage.setItem("flow-history", JSON.stringify(history));
+    localStorage.setItem("flow-history-index", JSON.stringify(historyIndex));
+  }, [history, historyIndex]);
 
-  useEffect(() => {
-    localStorage.setItem("flow-edges", JSON.stringify(edges));
-  }, [edges]);
-
-  const loadLocalStorage = () => {
-    let nodes = localStorage.getItem("flow-nodes");
-    let edges = localStorage.getItem("flow-edges");
-
-    if (nodes == null) {
-      return initialNodes;
-    } else if (edges == null) {
-      return [];
+  const onUndo = useCallback(() => {
+    if (historyIndex <= 0) {
+      return; // Prevent going below the first index
     }
-    return JSON.parse(nodes), JSON.parse(edges);
-  };
+    setHistoryIndex(historyIndex - 1); // Decrement the history index
+  }, [historyIndex]);
+
+  const onRedo = useCallback(() => {
+    if (historyIndex >= history.length - 1) {
+      return; // Prevent going out of bounds
+    }
+    setHistoryIndex(historyIndex + 1); // Increment the history index
+  }, [historyIndex, history.length]);
 
   return (
     <div style={{ height: "100%" }}>
       <ReactFlow
         nodes={nodesWithHandlers} // CHANGED: Use the nodes with injected handlers
-        edges={edges}
+        edges={currentEdges}
         nodeTypes={nodeTypes}
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
         onNodeDoubleClick={handleNodeDoubleClick} // CHANGED: Renamed for clarity
         onPaneDoubleClick={onPaneDoubleClick} // CHANGED: Use the specific pane handler
-        zoomOnDoubleClick={false} // This is correct, we disabled it for our custom action
+        zoomOnDoubleClick={false}
         onDoubleClick={onPaneDoubleClick}
         connectionMode="loose"
         isValidConnection={() => true}
@@ -366,6 +466,10 @@ function Flow() {
         onDeleteNode={onDeleteNode}
         onImport={onImport}
         onExport={onExport}
+        onUndo={onUndo}
+        onRedo={onRedo}
+        canUndo={canUndo}
+        canRedo={canRedo}
       />
     </div>
   );
