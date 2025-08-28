@@ -1,7 +1,16 @@
 import "./Toolbar.css";
 import { useRef } from "react";
 
-function Toolbar({ onAddNode, onDeleteNode, onImport, onExport }) {
+function Toolbar({
+  onAddNode,
+  onDeleteNode,
+  onImport,
+  onExport,
+  onUndo,
+  onRedo,
+  canUndo,
+  canRedo,
+}) {
   const fileInputRef = useRef(null);
 
   const handleImportClick = () => {
@@ -21,6 +30,12 @@ function Toolbar({ onAddNode, onDeleteNode, onImport, onExport }) {
         accept=".json"
       />
       <button onClick={onExport}>Export</button>
+      <button onClick={onUndo} disabled={!canUndo}>
+        Undo
+      </button>
+      <button onClick={onRedo} disabled={!canRedo}>
+        Redo
+      </button>
     </div>
   );
 }

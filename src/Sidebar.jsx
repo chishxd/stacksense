@@ -35,7 +35,7 @@ function Sidebar({ selectedNode, onLabelChange, onNodeColorChange }) {
       <h2>Style Editor</h2>
       <hr />
       <div className="data-edit-container">
-        <label>Label: </label>3
+        <label>Label: </label>
         <input
           className="label-data"
           type="text"
