@@ -118,21 +118,22 @@ function Flow() {
     return 0;
   });
 
+  // This effect runs once on mount to validate the history index from localStorage.
+  useEffect(() => {
+    if (historyIndex >= history.length) {
+      // If the saved index is out of bounds, reset it to the last valid entry.
+      setHistoryIndex(history.length - 1);
+    }
+  }, []); // Empty dependency array ensures this runs only once.
+
   const canUndo = historyIndex > 0;
   const canRedo = historyIndex < history.length - 1;
 
-  const currentNodes = history[historyIndex].nodes;
-  const currentEdges = history[historyIndex].edges;
+  // Safely access the current state from history, with fallbacks.
+  const currentNodes = history[historyIndex]?.nodes || [];
+  const currentEdges = history[historyIndex]?.edges || [];
 
   const reactFlowInstance = useReactFlow();
-
-  // This ref helps distinguish between internal React Flow changes (drag, select) and explicit changes (add, delete).
-  const isInternalChange = useRef(false);
-
-  // This effect resets the flag after a state update.
-  useEffect(() => {
-    isInternalChange.current = false;
-  });
 
   const [selectedNodes, setSelectedNodes] = useState([]);
 
@@ -177,24 +178,16 @@ function Flow() {
   const onNodesChange = useCallback(
     (changes) => {
       const newNodes = applyNodeChanges(changes, currentNodes);
-
-      // For internal changes (like dragging), we update the current history state
-      // without creating a new entry. This prevents polluting the history.
-      if (isInternalChange.current) {
-        const currentHistory = [...history];
-        currentHistory[historyIndex] = {
-          ...currentHistory[historyIndex],
-          nodes: newNodes,
-        };
-        setHistory(currentHistory);
-      } else {
-        // For explicit changes, we record a new history entry.
-        recordChange({ newNodes, newEdges: currentEdges });
-      }
-      // We set this flag before the next render cycle.
-      isInternalChange.current = true;
+      // For changes like dragging, we directly update the current history state
+      // without creating a new undo/redo entry.
+      const currentHistory = [...history];
+      currentHistory[historyIndex] = {
+        ...currentHistory[historyIndex],
+        nodes: newNodes,
+      };
+      setHistory(currentHistory);
     },
-    [currentNodes, currentEdges, history, historyIndex, recordChange]
+    [currentNodes, history, historyIndex]
   );
 
   const onNodeColorChange = useCallback(
@@ -225,21 +218,15 @@ function Flow() {
   const onEdgesChange = useCallback(
     (changes) => {
       const newEdges = applyEdgeChanges(changes, currentEdges);
-
-      // Similar to onNodesChange, we update the current history state for internal changes.
-      if (isInternalChange.current) {
-        const currentHistory = [...history];
-        currentHistory[historyIndex] = {
-          ...currentHistory[historyIndex],
-          edges: newEdges,
-        };
-        setHistory(currentHistory);
-      } else {
-        recordChange({ newNodes: currentNodes, newEdges });
-      }
-      isInternalChange.current = true;
+      // Directly update the current history state for edge changes.
+      const currentHistory = [...history];
+      currentHistory[historyIndex] = {
+        ...currentHistory[historyIndex],
+        edges: newEdges,
+      };
+      setHistory(currentHistory);
     },
-    [currentNodes, currentEdges, history, historyIndex, recordChange]
+    [currentEdges, history, historyIndex]
   );
 
   const onConnect = useCallback(
